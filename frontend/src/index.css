@@ -5,3 +5,17 @@
 body {
   @apply bg-slate-950 text-slate-100 min-h-screen;
 }
+
+#root {
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .chat-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    width: 100% !important;
+  }
+}
+

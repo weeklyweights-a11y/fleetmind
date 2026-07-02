@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.maintenance_event import MaintenanceEvent
 from app.models.truck import Truck
+from app.neo4j_client import get_neo4j_driver
 from app.models.vendor import Vendor
 from app.schemas.vendors import (
     VendorByCategory,
@@ -147,6 +148,39 @@ async def get_vendor_analysis_detail(
     if float(fleet_avg) > 0:
         diff = round((float(avg_cost) - float(fleet_avg)) / float(fleet_avg) * 100, 1)
 
+    graph: dict = {"nodes": [], "edges": []}
+    try:
+        neo = get_neo4j_driver()
+        async with neo.session() as session:
+            result = await session.run(
+                """
+                MATCH (v:Vendor {pg_id: $vendor_id})<-[:MAINTAINED_AT]-(t:Truck)
+                OPTIONAL MATCH (t)<-[:ASSIGNED_TO]-(dr:Driver)
+                RETURN v, t, collect(dr) AS drivers
+                """,
+                vendor_id=str(vendor_id),
+            )
+            seen_nodes: set[str] = set()
+            async for rec in result:
+                for node_key, node_type in [
+                    ("v", "Vendor"),
+                    ("t", "Truck"),
+                ]:
+                    node = rec[node_key]
+                    if node:
+                        nid = str(node["pg_id"])
+                        if nid not in seen_nodes:
+                            seen_nodes.add(nid)
+                            graph["nodes"].append({"id": nid, "type": node_type})
+                for dr in rec["drivers"] or []:
+                    if dr:
+                        nid = str(dr["pg_id"])
+                        if nid not in seen_nodes:
+                            seen_nodes.add(nid)
+                            graph["nodes"].append({"id": nid, "type": "Driver"})
+    except Exception:
+        pass
+
     return VendorDetailResponse(
         vendor=VendorDetailInfo(name=vendor.name, address=vendor.address, type=vendor.vendor_type),
         summary=VendorSummary(
@@ -164,4 +198,5 @@ async def get_vendor_analysis_detail(
             fleet_avg_cost=Decimal(str(fleet_avg)),
             difference_pct=diff,
         ),
+        relationship_graph=graph,
     )

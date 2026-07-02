@@ -14,6 +14,9 @@ class DriverListItem(BaseModel):
     status: str
     current_truck_unit: int | None = None
     license_expiry_date: date
+    license_class: str | None = None
+    endorsements: str | None = None
+    expiry_status: str = "green"
 
 
 class DriverIdentity(BaseModel):

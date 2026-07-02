@@ -22,6 +22,8 @@ class TruckListItem(BaseModel):
     model: str
     status: str
     current_driver_name: str | None = None
+    overall_compliance_status: str = "grey"
+    total_maintenance_spend: Decimal = Decimal("0")
 
 
 class OdometerReading(BaseModel):
@@ -144,6 +146,17 @@ class MaintenancePattern(BaseModel):
     supporting_data: dict[str, Any] = Field(default_factory=dict)
 
 
+class MaintenanceEventItem(BaseModel):
+    event_id: UUID
+    service_date: date
+    vendor_name: str
+    category: str
+    description: str
+    cost: Decimal
+    payment_status: str
+    source_document_id: UUID
+
+
 class TruckMaintenanceResponse(BaseModel):
     summary: MaintenanceSummary
     last_service: LastService | None = None
@@ -153,6 +166,7 @@ class TruckMaintenanceResponse(BaseModel):
     trend: list[MaintenanceTrendPoint] = Field(default_factory=list)
     patterns: list[MaintenancePattern] = Field(default_factory=list)
     vendor_graph: dict[str, Any] = Field(default_factory=dict)
+    events: list[MaintenanceEventItem] = Field(default_factory=list)
 
 
 class ComplianceCategories(BaseModel):

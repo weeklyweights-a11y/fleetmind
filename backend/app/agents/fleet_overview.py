@@ -9,12 +9,14 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents._compliance import compliance_snapshot_counts
+from app.agents.truck_financials import get_truck_financials
 from app.models.assignment import Assignment
 from app.models.document import Document
 from app.models.driver import Driver
 from app.models.maintenance_event import MaintenanceEvent
 from app.models.truck import Truck
 from app.models.vendor import Vendor
+from app.services.activity_description import build_activity_description
 from app.schemas.fleet import (
     ComplianceSnapshot,
     FinancialSnapshot,
@@ -128,6 +130,8 @@ async def get_fleet_overview(
                 truck_unit=unit,
                 activity_date=doc.document_date,
                 status=doc.processing_status,
+                description=build_activity_description(doc),
+                created_at=doc.created_at,
             )
         )
 
@@ -149,6 +153,56 @@ async def get_fleet_overview(
     vendor_count = (
         await db.execute(select(func.count()).select_from(Vendor).where(Vendor.tenant_id == tenant_id))
     ).scalar_one() or 0
+
+    month_spend_by_truck = (
+        await db.execute(
+            select(
+                MaintenanceEvent.truck_id,
+                func.coalesce(func.sum(MaintenanceEvent.total_cost), 0).label("spend"),
+                func.count(MaintenanceEvent.id).label("events"),
+            )
+            .where(
+                MaintenanceEvent.tenant_id == tenant_id,
+                MaintenanceEvent.service_date >= month_start,
+            )
+            .group_by(MaintenanceEvent.truck_id)
+        )
+    ).all()
+    if not month_spend_by_truck:
+        month_spend_by_truck = (
+            await db.execute(
+                select(
+                    MaintenanceEvent.truck_id,
+                    func.coalesce(func.sum(MaintenanceEvent.total_cost), 0).label("spend"),
+                    func.count(MaintenanceEvent.id).label("events"),
+                )
+                .where(MaintenanceEvent.tenant_id == tenant_id)
+                .group_by(MaintenanceEvent.truck_id)
+            )
+        ).all()
+    truck_unit_map = {t.id: t.unit_number for t in trucks}
+    most_expensive = None
+    most_serviced = None
+    if month_spend_by_truck:
+        top_spend = max(month_spend_by_truck, key=lambda r: float(r.spend))
+        top_events = max(month_spend_by_truck, key=lambda r: r.events)
+        most_expensive = {
+            "unit": truck_unit_map.get(top_spend.truck_id),
+            "total_spend": float(top_spend.spend),
+        }
+        most_serviced = {
+            "unit": truck_unit_map.get(top_events.truck_id),
+            "event_count": int(top_events.events),
+        }
+
+    cpms: list[float] = []
+    for t in trucks:
+        if t.status != "active":
+            continue
+        fin = await get_truck_financials(db, t.id, tenant_id)
+        if fin.cost_per_mile is not None:
+            cpms.append(float(fin.cost_per_mile))
+    fleet_avg_cpm = Decimal(str(sum(cpms) / len(cpms))) if cpms else None
 
     return FleetOverviewResponse(
         fleet_composition=FleetComposition(
@@ -181,5 +235,8 @@ async def get_fleet_overview(
         quick_stats=QuickStats(
             total_maintenance_events=maint_total,
             total_vendors=vendor_count,
+            most_expensive_truck=most_expensive,
+            most_serviced_truck=most_serviced,
+            fleet_avg_cost_per_mile=fleet_avg_cpm,
         ),
     )

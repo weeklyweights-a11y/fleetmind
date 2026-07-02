@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +18,15 @@ from app.schemas.drivers import DriverListItem, DriverProfileResponse
 from app.schemas.pagination import PaginatedResponse, build_paginated, paginate_params
 
 router = APIRouter(prefix="/api/drivers", tags=["drivers"])
+
+
+def _expiry_status(expiry: date) -> str:
+    days = (expiry - date.today()).days
+    if days < 0:
+        return "red"
+    if days < 90:
+        return "yellow"
+    return "green"
 
 
 @router.get("", response_model=PaginatedResponse[DriverListItem])
@@ -69,6 +80,9 @@ async def list_drivers(
                 status=driver.status,
                 current_truck_unit=truck_unit,
                 license_expiry_date=driver.license_expiry_date,
+                license_class=driver.license_class,
+                endorsements=driver.license_endorsements,
+                expiry_status=_expiry_status(driver.license_expiry_date),
             )
         )
 

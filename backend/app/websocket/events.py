@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import text
@@ -13,7 +14,7 @@ NOTIFY_CHANNEL = "document_events"
 
 
 async def notify_document_event(payload: dict[str, Any]) -> None:
-    """Stub helper for Phase 2 worker to emit Postgres NOTIFY events."""
+    """Emit Postgres NOTIFY for WebSocket fan-out."""
     async with async_session_factory() as session:
         await session.execute(
             text("SELECT pg_notify(:channel, :payload)"),
@@ -23,22 +24,42 @@ async def notify_document_event(payload: dict[str, Any]) -> None:
 
 
 def build_document_status_message(payload: dict[str, Any]) -> dict[str, Any]:
-    return {
+    details: dict[str, Any] = {}
+    if payload.get("document_type"):
+        details["document_type"] = payload["document_type"]
+    if payload.get("truck_unit") is not None:
+        details["truck_unit"] = payload["truck_unit"]
+    elif payload.get("truck_id"):
+        details["truck_id"] = payload["truck_id"]
+    for key in ("error_details", "affected_tables", "driver_id", "vendor_id"):
+        if payload.get(key) is not None:
+            details[key] = payload[key]
+
+    message: dict[str, Any] = {
         "type": "document_status",
         "document_id": payload.get("document_id"),
+        "filename": payload.get("filename"),
         "status": payload.get("status"),
-        "details": {
-            k: v
-            for k, v in payload.items()
-            if k not in {"document_id", "status"}
-        },
     }
+    if payload.get("progress"):
+        message["progress"] = payload["progress"]
+    if details:
+        message["details"] = details
+    return message
 
 
-def build_data_update_message(entity_type: str, entity_id: str, changes: dict[str, Any]) -> dict[str, Any]:
-    return {
+def build_data_update_message(
+    topic: str,
+    delta: dict[str, Any],
+    *,
+    refetch: bool = False,
+) -> dict[str, Any]:
+    message: dict[str, Any] = {
         "type": "data_update",
-        "entity_type": entity_type,
-        "entity_id": entity_id,
-        "changes": changes,
+        "topic": topic,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "delta": delta,
     }
+    if refetch:
+        message["refetch"] = True
+    return message

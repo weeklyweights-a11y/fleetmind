@@ -23,6 +23,7 @@ from app.extraction.layer6_corrector import correct_fields
 from app.extraction.types import PipelineContext
 from app.models.document import Document
 from app.services.extraction_status import update_status
+from app.services.truck_unit_lookup import resolve_truck_unit
 
 logger = logging.getLogger(__name__)
 
@@ -134,24 +135,26 @@ async def run(document_id: str, file_path: str, tenant_id: int = 1) -> None:
         ctx.original_filename = doc.original_filename
 
         try:
-            await update_status(db, doc_uuid, ProcessingStatus.PARSING)
+            await update_status(db, doc_uuid, ProcessingStatus.PARSING, layer_status="parsing")
             ctx.l1 = read_document(file_path)
             await db.commit()
 
             ctx.l2 = build_layout(ctx.l1)
             doc_type = classify_document(ctx.l1, ctx.l2, file_path=doc.file_path)
+            await update_status(db, doc_uuid, ProcessingStatus.PARSING, layer_status="layout")
+            await db.commit()
 
-            await update_status(db, doc_uuid, ProcessingStatus.EXTRACTING)
+            await update_status(db, doc_uuid, ProcessingStatus.EXTRACTING, layer_status="extracting")
             ctx.extraction = await extract_fields(doc_type, ctx.l1, ctx.l2)
             await db.commit()
 
-            await update_status(db, doc_uuid, ProcessingStatus.NORMALIZING)
+            await update_status(db, doc_uuid, ProcessingStatus.NORMALIZING, layer_status="normalizing")
             ctx.normalized_fields, ctx.normalization_issues = normalize_fields(
                 ctx.extraction.extracted_fields
             )
             await db.commit()
 
-            await update_status(db, doc_uuid, ProcessingStatus.VALIDATING)
+            await update_status(db, doc_uuid, ProcessingStatus.VALIDATING, layer_status="validating")
             ctx.validation = validate_fields(
                 ctx.extraction.document_type,
                 ctx.normalized_fields,
@@ -161,6 +164,8 @@ async def run(document_id: str, file_path: str, tenant_id: int = 1) -> None:
 
             corrections = []
             if ctx.validation.failed_fields and settings.gemini_api_key:
+                await update_status(db, doc_uuid, ProcessingStatus.VALIDATING, layer_status="correcting")
+                await db.commit()
                 ctx.normalized_fields, ctx.l6_attempts = await correct_fields(
                     ctx.extraction.document_type,
                     ctx.normalized_fields,
@@ -178,6 +183,8 @@ async def run(document_id: str, file_path: str, tenant_id: int = 1) -> None:
                 corrections = [a for a in ctx.l6_attempts if a.accepted]
 
             ctx.entity_resolution_confidence = ctx.validation.overall_confidence
+            await update_status(db, doc_uuid, ProcessingStatus.VALIDATING, layer_status="saving")
+            await db.commit()
             await layer7_enricher.enrich(db, ctx, corrections=corrections)
 
             try:
@@ -187,12 +194,26 @@ async def run(document_id: str, file_path: str, tenant_id: int = 1) -> None:
                     result = await err_db.execute(select(Document).where(Document.id == doc_uuid))
                     err_doc = result.scalar_one()
                     err_doc.processing_status = ProcessingStatus.FAILED.value
-                    err_doc.error_details = json.dumps(
+                    error_json = json.dumps(
                         {
                             "pg_committed": True,
                             "neo4j_error": str(neo_exc),
                             "repair_hint": f"graph_writer.repair_document_graph('{document_id}')",
                         }
+                    )
+                    err_doc.error_details = error_json
+                    truck_unit = await resolve_truck_unit(err_db, ctx.truck_id)
+                    await update_status(
+                        err_db,
+                        doc_uuid,
+                        ProcessingStatus.FAILED,
+                        {
+                            "document_type": ctx.extraction.document_type if ctx.extraction else None,
+                            "truck_id": ctx.truck_id,
+                            "error_details": error_json,
+                            **({"truck_unit": truck_unit} if truck_unit is not None else {}),
+                        },
+                        layer_status="failed",
                     )
                     await err_db.commit()
                 raise
@@ -206,17 +227,22 @@ async def run(document_id: str, file_path: str, tenant_id: int = 1) -> None:
             final_status = (
                 ProcessingStatus.NEEDS_REVIEW if needs_review else ProcessingStatus.COMPLETE
             )
+            truck_unit = await resolve_truck_unit(db, ctx.truck_id)
+            extra: dict = {
+                "document_type": ctx.extraction.document_type,
+                "truck_id": ctx.truck_id,
+                "driver_id": ctx.driver_id,
+                "vendor_id": ctx.vendor_id,
+                "affected_tables": ctx.affected_tables,
+            }
+            if truck_unit is not None:
+                extra["truck_unit"] = truck_unit
             await update_status(
                 db,
                 doc_uuid,
                 final_status,
-                {
-                    "document_type": ctx.extraction.document_type,
-                    "truck_id": ctx.truck_id,
-                    "driver_id": ctx.driver_id,
-                    "vendor_id": ctx.vendor_id,
-                    "affected_tables": ctx.affected_tables,
-                },
+                extra,
+                layer_status=str(final_status),
             )
             await db.commit()
 
@@ -229,5 +255,12 @@ async def run(document_id: str, file_path: str, tenant_id: int = 1) -> None:
                 if err_doc:
                     err_doc.processing_status = ProcessingStatus.FAILED.value
                     err_doc.error_details = str(exc)
+                    await update_status(
+                        err_db,
+                        doc_uuid,
+                        ProcessingStatus.FAILED,
+                        {"error_details": str(exc)},
+                        layer_status="failed",
+                    )
                     await err_db.commit()
             raise

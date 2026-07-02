@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -43,6 +43,8 @@ class RecentActivityItem(BaseModel):
     truck_unit: int | None = None
     activity_date: date | None = Field(None, serialization_alias="date")
     status: str
+    description: str | None = None
+    created_at: datetime | None = None
 
 
 class QuickStats(BaseModel):
@@ -100,3 +102,20 @@ class FleetGraphResponse(BaseModel):
     nodes: list[GraphNode]
     edges: list[GraphEdge]
     stats: dict[str, int]
+
+
+class FleetMaintenanceMonthPoint(BaseModel):
+    month: str
+    spend: Decimal
+    event_count: int
+
+
+class FleetCategorySpend(BaseModel):
+    category: str
+    spend: Decimal
+    count: int
+
+
+class FleetMaintenanceSummaryResponse(BaseModel):
+    monthly_trend: list[FleetMaintenanceMonthPoint] = Field(default_factory=list)
+    by_category: list[FleetCategorySpend] = Field(default_factory=list)

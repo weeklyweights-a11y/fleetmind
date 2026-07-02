@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -51,6 +52,7 @@ class DocumentResponse(BaseModel):
     truck_id: UUID | None
     driver_id: UUID | None
     vendor_id: UUID | None
+    truck_unit: int | None = None
     processing_status: str
     parse_confidence: Decimal | None
     entity_resolution_confidence: Decimal | None
@@ -59,6 +61,22 @@ class DocumentResponse(BaseModel):
     error_details: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class DocumentExtractionField(BaseModel):
+    name: str
+    value: Any
+    confidence: float | None = None
+    corrected: bool = False
+    correction_source: str | None = None
+    validation_error: str | None = None
+
+
+class DocumentExtractionResponse(BaseModel):
+    document_id: UUID
+    document_type: str | None = None
+    fields: list[DocumentExtractionField] = Field(default_factory=list)
+    validation_failures: list[dict[str, str]] = Field(default_factory=list)
 
 
 class DocumentListResponse(BaseModel):
@@ -74,9 +92,11 @@ class DocumentCorrectionItem(BaseModel):
 
 
 class DocumentReviewSubmitRequest(BaseModel):
-    corrections: list[DocumentCorrectionItem]
+    action: Literal["correct", "approve", "reject"] = "correct"
+    corrections: list[DocumentCorrectionItem] = Field(default_factory=list)
     corrected_by: str | None = None
     reprocess: bool = False
+    reject_reason: str | None = None
 
 
 class DocumentReviewSubmitResponse(BaseModel):

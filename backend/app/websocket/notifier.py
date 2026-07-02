@@ -6,6 +6,7 @@ import asyncpg
 
 from app.config import settings
 from app.redis_client import get_all_ws_subscriptions
+from app.websocket.delta_engine import push_deltas_for_event
 from app.websocket.events import build_document_status_message
 from app.websocket.manager import ws_manager
 
@@ -31,6 +32,14 @@ async def _route_notification(payload: dict) -> None:
 
     if targets:
         await ws_manager.broadcast(targets, message)
+
+    terminal = status in {"complete", "needs_review", "failed"}
+    review_event = payload.get("event_type") == "review"
+    if terminal or review_event:
+        try:
+            await push_deltas_for_event(payload)
+        except Exception:
+            logger.exception("Delta push failed for document %s", document_id)
 
 
 async def run_notify_listener(stop_event: asyncio.Event) -> None:

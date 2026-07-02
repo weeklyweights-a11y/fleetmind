@@ -7,10 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents._lookup import resolve_truck_ids_from_list
 from app.agents.fleet_comparison import get_fleet_comparison
+from app.agents.fleet_maintenance_summary import get_fleet_maintenance_summary
 from app.agents.fleet_overview import get_fleet_overview
 from app.agents.graph_queries import get_fleet_graph
 from app.database import get_db
-from app.schemas.fleet import FleetComparisonResponse, FleetGraphResponse, FleetOverviewResponse
+from app.schemas.fleet import (
+    FleetComparisonResponse,
+    FleetGraphResponse,
+    FleetMaintenanceSummaryResponse,
+    FleetOverviewResponse,
+)
 
 router = APIRouter(prefix="/api/fleet", tags=["fleet"])
 
@@ -35,3 +41,10 @@ async def fleet_comparison(
 @router.get("/graph", response_model=FleetGraphResponse)
 async def fleet_graph(db: AsyncSession = Depends(get_db)) -> FleetGraphResponse:
     return await get_fleet_graph(db)
+
+
+@router.get("/maintenance-summary", response_model=FleetMaintenanceSummaryResponse)
+async def fleet_maintenance_summary(
+    db: AsyncSession = Depends(get_db),
+) -> FleetMaintenanceSummaryResponse:
+    return await get_fleet_maintenance_summary(db)

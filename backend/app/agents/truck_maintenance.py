@@ -18,6 +18,7 @@ from app.schemas.trucks import (
     CategoryBreakdown,
     FleetMaintenanceComparison,
     LastService,
+    MaintenanceEventItem,
     MaintenancePattern,
     MaintenanceSummary,
     MaintenanceTrendPoint,
@@ -187,6 +188,24 @@ async def get_truck_maintenance(
     except Exception:
         pass
 
+    event_items: list[MaintenanceEventItem] = []
+    for e in events:
+        vname = (
+            await db.execute(select(Vendor.name).where(Vendor.id == e.vendor_id))
+        ).scalar_one_or_none() or "Unknown"
+        event_items.append(
+            MaintenanceEventItem(
+                event_id=e.id,
+                service_date=e.service_date,
+                vendor_name=vname,
+                category=e.category,
+                description=(e.description or "")[:200],
+                cost=e.total_cost,
+                payment_status=e.payment_status,
+                source_document_id=e.source_document_id,
+            )
+        )
+
     return TruckMaintenanceResponse(
         summary=MaintenanceSummary(
             total_spend=total_spend,
@@ -209,4 +228,5 @@ async def get_truck_maintenance(
         trend=trend,
         patterns=patterns,
         vendor_graph=vendor_graph,
+        events=event_items,
     )
