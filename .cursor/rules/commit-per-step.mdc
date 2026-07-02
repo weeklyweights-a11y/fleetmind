@@ -1,0 +1,54 @@
+---
+description: Commit to git after each completed plan step or phase todo
+alwaysApply: true
+---
+
+# Commit after each step
+
+When implementing a phased plan (Phase 1–6), **create a git commit immediately after each plan step/todo is completed** — do not batch multiple steps into one commit.
+
+## When to commit
+
+Commit right after a step is **done and verifiable** (tests pass or acceptance check for that slice passes).
+
+| Step type | Commit trigger |
+|-----------|----------------|
+| Plan todo (e.g. `foundation`, `api-routes`) | Todo marked complete |
+| Phase acceptance milestone | After `verify_phaseN_acceptance.py` passes |
+| Spec sub-section | After that sub-section's endpoints/agents exist |
+
+## Commit message format
+
+```
+phase-N: <step-id> — <short why>
+
+Examples:
+phase-3: foundation — agents package, schemas, lookup, pool config
+phase-3: truck-postgres-agents — identity through documents sub-agents
+phase-3: verify-phase3 — acceptance script 36/36
+phase-2: extraction-pipeline — layers 1–7 and graph writer
+```
+
+## Rules
+
+1. **One step = one commit** (unless the user explicitly asks to squash).
+2. **Never commit** `.env`, `document_storage/`, `data/`, or secrets.
+3. Run `git status` before each commit; stage only files for that step.
+4. If a step fixes a prior step, still commit separately with `fix:` in the message.
+5. At phase end, ensure acceptance script passes, then commit verification/tests if not already committed.
+
+## Phase step checklists
+
+### Phase 3 (reference)
+
+1. `foundation` — `app/agents/` core, schemas, exceptions, pool
+2. `compliance-core` — `_compliance.py`
+3. `truck-postgres-agents` — `truck_*.py`
+4. `graph-alignment` — `graph_queries.py`, graph_writer patches
+5. `fleet-agents` — overview, comparison, matrix
+6. `driver-vendor-stubs` — driver, vendor, anomaly, memory
+7. `api-routes` — route modules + `main.py` registration
+8. `document-api` — file serve, review GET/POST
+9. `verify-phase3` — tests + `verify_phase3_acceptance.py`
+
+Apply the same pattern to Phase 4+ using that phase's plan todos.

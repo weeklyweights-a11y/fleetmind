@@ -1,0 +1,16 @@
+.env
+.env.local
+document_storage/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+dist/
+build/
+*.log
+.DS_Store
+uploads/
+data/
