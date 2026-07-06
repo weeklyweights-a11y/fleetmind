@@ -102,3 +102,64 @@ async def resolve_truck_ids_from_list(
             continue
         ids.append(await resolve_truck_id(db, identifier=ident, tenant_id=tenant_id))
     return ids
+
+
+async def resolve_vendor_by_name(
+    db: AsyncSession,
+    name: str,
+    tenant_id: int = 1,
+) -> uuid.UUID:
+    q = name.strip()
+    if not q:
+        raise VendorNotFoundError(name)
+    result = await db.execute(
+        select(Vendor)
+        .where(Vendor.tenant_id == tenant_id, Vendor.name.ilike(f"%{q}%"))
+        .order_by(Vendor.name)
+        .limit(2)
+    )
+    rows = result.scalars().all()
+    if not rows:
+        raise VendorNotFoundError(name)
+    if len(rows) > 1 and rows[0].name.lower() != q.lower():
+        raise VendorNotFoundError(f"Multiple vendors match '{name}'")
+    return rows[0].id
+
+
+async def resolve_driver_by_name(
+    db: AsyncSession,
+    name: str,
+    tenant_id: int = 1,
+) -> uuid.UUID:
+    q = name.strip()
+    if not q:
+        raise DriverNotFoundError(name)
+    result = await db.execute(
+        select(Driver.id).where(
+            Driver.tenant_id == tenant_id,
+            Driver.full_name.ilike(f"%{q}%"),
+        )
+    )
+    driver_id = result.scalar_one_or_none()
+    if driver_id is None:
+        raise DriverNotFoundError(name)
+    return driver_id
+
+
+async def resolve_truck_by_attributes(
+    db: AsyncSession,
+    make: str | None = None,
+    color: str | None = None,
+    tenant_id: int = 1,
+) -> uuid.UUID:
+    stmt = select(Truck).where(Truck.tenant_id == tenant_id)
+    if make:
+        stmt = stmt.where(Truck.make.ilike(f"%{make.strip()}%"))
+    if color:
+        stmt = stmt.where(Truck.color.ilike(f"%{color.strip()}%"))
+    rows = (await db.execute(stmt.limit(5))).scalars().all()
+    if not rows:
+        raise TruckNotFoundError(f"{make or ''} {color or ''}".strip())
+    if len(rows) > 1:
+        raise TruckNotFoundError("Multiple trucks match description")
+    return rows[0].id

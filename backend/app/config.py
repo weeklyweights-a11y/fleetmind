@@ -42,6 +42,18 @@ class Settings(BaseSettings):
     db_max_overflow: int = 30
     neo4j_max_connection_pool_size: int = 50
 
+    chat_confidence_threshold: float = 0.6
+    chat_turn_history_store_limit: int = 20
+    chat_turn_history_prompt_limit: int = 5
+    chat_session_ttl_seconds: int = 86400
+    chat_idle_timeout_seconds: int = 1800
+
+    intelligence_enabled: bool = True
+    compliance_scan_hour: int = 6
+    baseline_recompute_hour: int = 7
+    unresolved_check_interval_hours: int = 6
+    weekly_report_dow: int = 6
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

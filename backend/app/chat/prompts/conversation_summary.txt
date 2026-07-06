@@ -1,0 +1,9 @@
+Summarize this fleet operations conversation transcript as JSON with fields:
+- entities_discussed: list of {type, id, name}
+- topics: list of topic strings
+- key_findings: list of important fact strings
+- unresolved_items: list of {description, entity_type, entity_id, follow_up_date} from phrases like keep an eye on, flag it, remind me, deal with this later
+- query_preferences: optional dict of operator habits (e.g. preferred_units, default_time_scope, focus_topics) inferred from the conversation
+- summary_text: one paragraph summary
+
+Return valid JSON only.

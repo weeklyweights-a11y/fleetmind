@@ -1,0 +1,1 @@
+Analyze these conversation transcripts for operator {{operator_name}}. Infer preferred_response_style as one of: concise, detailed, comparative. Return JSON: {"preferred_response_style": "..."}.

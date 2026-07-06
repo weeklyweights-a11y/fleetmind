@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { apiGet } from "../../api/client.js";
 import { ChatProvider, useChat } from "../../context/ChatContext.jsx";
+import { DashboardContextProvider } from "../../context/DashboardContext.jsx";
 import { ProcessingQueueProvider } from "../../context/ProcessingQueueContext.jsx";
 import { Header } from "./Header.jsx";
 import { Sidebar } from "./Sidebar.jsx";
@@ -17,13 +18,32 @@ function AppShellInner() {
   const location = useLocation();
 
   const chatChips = useMemo(() => {
-    const truckMatch = location.pathname.match(/^\/trucks\/(\d+)/);
-    if (truckMatch) {
-      const unit = truckMatch[1];
+    const path = location.pathname;
+    if (path === "/" || path === "") {
       return [
-        "Why is this truck expensive?",
+        "How's the fleet doing?",
+        "Any compliance issues this week?",
+        "Which truck costs the most?",
+      ];
+    }
+    if (path.startsWith("/anomalies")) {
+      return ["What's flagged right now?", "Anything I was tracking?"];
+    }
+    const truckMatch = path.match(/^\/trucks\/(\d+)/);
+    if (truckMatch) {
+      return [
+        "Why is maintenance so high?",
+        "Is everything up to date?",
         "Compare with other trucks",
-        `Show maintenance history for Unit ${unit}`,
+      ];
+    }
+    if (path.startsWith("/compliance")) {
+      return ["What's the most urgent item?", "Which trucks need attention?"];
+    }
+    if (path.startsWith("/financials")) {
+      return [
+        "Which truck has the highest cost per mile?",
+        "How has spending changed this quarter?",
       ];
     }
     return [];
@@ -62,9 +82,11 @@ function AppShellInner() {
 export function AppShell() {
   return (
     <ProcessingQueueProvider>
-      <ChatProvider>
-        <AppShellInner />
-      </ChatProvider>
+      <DashboardContextProvider>
+        <ChatProvider>
+          <AppShellInner />
+        </ChatProvider>
+      </DashboardContextProvider>
     </ProcessingQueueProvider>
   );
 }
