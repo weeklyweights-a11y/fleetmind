@@ -3,7 +3,9 @@
 
 # Local specs and editor config — not published
 *.md
+!README.md
 .cursor/
+.cursorrules
 
 document_storage/
 __pycache__/
