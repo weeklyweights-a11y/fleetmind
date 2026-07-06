@@ -1,5 +1,10 @@
 .env
 .env.local
+
+# Local specs and editor config — not published
+*.md
+.cursor/
+
 document_storage/
 __pycache__/
 *.py[cod]
