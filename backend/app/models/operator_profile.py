@@ -18,3 +18,4 @@ class OperatorProfile(Base, StandardColumnsMixin):
     typical_session_pattern: Mapped[str | None] = mapped_column(Text, nullable=True)
     total_conversations: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     last_active: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    query_preferences: Mapped[dict | list | None] = mapped_column(JSONB, nullable=True)

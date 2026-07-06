@@ -1,5 +1,6 @@
 from app.models.anomaly import Anomaly
 from app.models.assignment import Assignment
+from app.models.background_job_run import BackgroundJobRun
 from app.models.base import Base
 from app.models.conversation import Conversation, ConversationMessage
 from app.models.document import Document
@@ -15,6 +16,7 @@ from app.models.maintenance_event import MaintenanceEvent
 from app.models.mileage_record import MileageRecord
 from app.models.operator_profile import OperatorProfile
 from app.models.registration import Registration
+from app.models.system_report import SystemReport
 from app.models.title import Title
 from app.models.trailer import Trailer
 from app.models.truck import Truck
@@ -23,6 +25,7 @@ from app.models.vendor import Vendor
 __all__ = [
     "Anomaly",
     "Assignment",
+    "BackgroundJobRun",
     "Base",
     "Conversation",
     "ConversationMessage",
@@ -41,6 +44,7 @@ __all__ = [
     "MileageRecord",
     "OperatorProfile",
     "Registration",
+    "SystemReport",
     "Title",
     "Trailer",
     "Truck",
