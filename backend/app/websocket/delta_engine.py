@@ -72,7 +72,14 @@ async def _fetch_topic_data(topic: str, tenant_id: int = 1) -> dict[str, Any] | 
             matrix = await get_compliance_matrix(db, tenant_id)
             return matrix.model_dump(mode="json")
         if topic == "anomalies":
-            return {"items": []}
+            from app.agents.anomaly_feed import get_anomaly_feed
+
+            feed = await get_anomaly_feed(db, limit=3, tenant_id=tenant_id)
+            return {
+                "refetch": True,
+                "counts": feed.counts.model_dump(mode="json"),
+                "anomalies": [a.model_dump(mode="json") for a in feed.anomalies],
+            }
 
         parsed = _parse_truck_topic(topic)
         if parsed is None:

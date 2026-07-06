@@ -16,6 +16,14 @@ class AnomalyItem(BaseModel):
     supporting_data: dict[str, Any] | list[Any] = Field(default_factory=dict)
     status: str
     detected_at: datetime
+    follow_up: bool = False
+    conversation_id: UUID | None = None
+
+
+class AnomalyStatusUpdate(BaseModel):
+    status: str
+    reason: str | None = None
+    operator_name: str | None = "default"
 
 
 class AnomalyCounts(BaseModel):

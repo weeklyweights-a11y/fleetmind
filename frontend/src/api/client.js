@@ -26,6 +26,19 @@ export async function apiPost(path, body) {
   return res.json();
 }
 
+export async function apiPatch(path, body) {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function apiUpload(path, formData) {
   const res = await fetch(`${API_URL}${path}`, { method: "POST", body: formData });
   if (!res.ok) {

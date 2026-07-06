@@ -1,12 +1,13 @@
-"""Anomaly feed sub-agent (Phase 6 data stub)."""
+"""Anomaly feed sub-agent."""
 
 from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import case, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.intelligence.config import SEVERITY_RANK
 from app.models.anomaly import Anomaly
 from app.models.driver import Driver
 from app.models.truck import Truck
@@ -32,12 +33,22 @@ async def _resolve_entity_name(
     return None
 
 
+def _severity_order():
+    return case(
+        (Anomaly.severity == "critical", SEVERITY_RANK["critical"]),
+        (Anomaly.severity == "warning", SEVERITY_RANK["warning"]),
+        (Anomaly.severity == "info", SEVERITY_RANK["info"]),
+        else_=3,
+    )
+
+
 async def get_anomaly_feed(
     db: AsyncSession,
     status_filter: list[str] | None = None,
     severity_filter: list[str] | None = None,
     entity_type: str | None = None,
     entity_id: uuid.UUID | None = None,
+    follow_up: bool | None = None,
     limit: int = 20,
     tenant_id: int = 1,
 ) -> AnomalyFeedResponse:
@@ -49,12 +60,21 @@ async def get_anomaly_feed(
         query = query.where(Anomaly.entity_type == entity_type)
     if entity_id:
         query = query.where(Anomaly.entity_id == entity_id)
-    query = query.order_by(Anomaly.detected_at.desc()).limit(limit)
+    if follow_up is True:
+        query = query.where(Anomaly.supporting_data["follow_up"].as_boolean() == True)  # noqa: E712
+    elif follow_up is False:
+        query = query.where(
+            (Anomaly.supporting_data["follow_up"].as_boolean() == False)  # noqa: E712
+            | (Anomaly.supporting_data["follow_up"].is_(None))
+        )
+
+    query = query.order_by(_severity_order(), Anomaly.detected_at.desc()).limit(limit)
 
     rows = (await db.execute(query)).scalars().all()
     items: list[AnomalyItem] = []
     for row in rows:
         name = await _resolve_entity_name(db, row.entity_type, row.entity_id)
+        sd = row.supporting_data if isinstance(row.supporting_data, dict) else {}
         items.append(
             AnomalyItem(
                 anomaly_id=row.id,
@@ -67,8 +87,12 @@ async def get_anomaly_feed(
                 supporting_data=row.supporting_data,
                 status=row.status,
                 detected_at=row.detected_at,
+                follow_up=bool(sd.get("follow_up")),
+                conversation_id=uuid.UUID(str(sd["conversation_id"])) if sd.get("conversation_id") else None,
             )
         )
+
+    from sqlalchemy import func
 
     counts_base = select(func.count()).select_from(Anomaly).where(Anomaly.tenant_id == tenant_id)
     total = (await db.execute(counts_base)).scalar_one() or 0

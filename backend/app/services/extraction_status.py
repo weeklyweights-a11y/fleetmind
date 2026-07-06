@@ -8,6 +8,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.enums import ProcessingStatus
 from app.models.document import Document
 from app.services.pipeline_progress import progress_payload
@@ -44,3 +45,17 @@ async def update_status(
         payload["truck_unit"] = truck_unit
     await db.flush()
     await notify_document_event(payload)
+    if status_str == ProcessingStatus.COMPLETE.value and settings.intelligence_enabled:
+        from app.intelligence.hooks.document_complete import on_document_complete
+
+        hook_payload = {
+            **payload,
+            "document_type": doc.document_type,
+            "truck_id": str(doc.truck_id) if doc.truck_id else payload.get("truck_id"),
+            "vendor_id": str(extra.get("vendor_id")) if extra and extra.get("vendor_id") else None,
+        }
+        if extra and extra.get("affected_tables"):
+            hook_payload["affected_tables"] = extra["affected_tables"]
+        import asyncio
+
+        asyncio.create_task(on_document_complete(hook_payload))

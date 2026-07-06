@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import signal
@@ -16,6 +17,9 @@ from app.models.document import Document
 from app.redis_client import DOCUMENT_PROCESSING_DLQ, DOCUMENT_PROCESSING_QUEUE, close_redis, get_redis
 from app.services.document_retry import persist_pipeline_retry_count
 from app.worker import processor
+
+if settings.intelligence_enabled:
+    from app.intelligence.scheduler import start_scheduler
 
 logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO))
 logger = logging.getLogger(__name__)
@@ -131,9 +135,16 @@ async def main() -> None:
     signal.signal(signal.SIGTERM, _handle_signal)
     signal.signal(signal.SIGINT, _handle_signal)
 
+    scheduler_task = None
     try:
+        if settings.intelligence_enabled:
+            scheduler_task = asyncio.create_task(start_scheduler(stop_event))
         await consume_jobs(stop_event)
     finally:
+        if scheduler_task is not None:
+            scheduler_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await scheduler_task
         await close_redis()
 
 

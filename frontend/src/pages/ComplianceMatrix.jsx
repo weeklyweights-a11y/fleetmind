@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiGet } from "../api/client.js";
+import { useChat } from "../context/ChatContext.jsx";
 import { useSubAgent } from "../hooks/useSubAgent.js";
 import { Skeleton } from "../components/common/Skeleton.jsx";
 import { ErrorPanel } from "../components/common/ErrorPanel.jsx";
@@ -12,6 +13,7 @@ export default function ComplianceMatrix() {
   const [params] = useSearchParams();
   const statusFilter = params.get("status");
   const [tick, setTick] = useState(0);
+  const { prefillChat, setOpen } = useChat();
 
   const { data, loading, error, refetch } = useSubAgent(() => apiGet("/api/compliance/matrix"), {
     topic: "compliance_matrix",
@@ -62,8 +64,16 @@ export default function ComplianceMatrix() {
                 {CATEGORIES.map((c) => {
                   const cell = row[c] || {};
                   return (
-                    <td key={c} className="p-2 text-center">
-                      <span className={`inline-block w-3 h-3 rounded-full ${complianceColor(cell.status)}`} title={`${cell.days ?? ""} days`} />
+                    <td
+                      key={c}
+                      className="p-2 text-center cursor-pointer"
+                      title={`${cell.days ?? ""} days — click for details`}
+                      onClick={() => {
+                        setOpen(true);
+                        prefillChat(`Tell me about truck ${row.truck_unit}'s ${c.replace("_", " ")}`);
+                      }}
+                    >
+                      <span className={`inline-block w-3 h-3 rounded-full ${complianceColor(cell.status)}`} />
                     </td>
                   );
                 })}

@@ -14,6 +14,7 @@ import DocumentList from "./pages/DocumentList.jsx";
 import DocumentViewer from "./pages/DocumentViewer.jsx";
 import ReviewQueue from "./pages/ReviewQueue.jsx";
 import AnomalyFeed from "./pages/AnomalyFeed.jsx";
+import AdminHealth from "./pages/AdminHealth.jsx";
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="vendors" element={<VendorList />} />
             <Route path="vendors/:id" element={<VendorDetail />} />
             <Route path="anomalies" element={<AnomalyFeed />} />
+            <Route path="admin/health" element={<AdminHealth />} />
             <Route path="documents" element={<DocumentList />} />
             <Route path="documents/:id" element={<DocumentViewer />} />
             <Route path="review" element={<ReviewQueue />} />

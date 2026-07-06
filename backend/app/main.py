@@ -19,6 +19,7 @@ from app.exceptions import (
 )
 from app.neo4j_client import apply_migrations, check_graph_integrity, close_neo4j_driver
 from app.redis_client import close_redis
+from app.routes.admin import router as admin_router
 from app.routes.anomalies import router as anomalies_router
 from app.routes.compliance import router as compliance_router
 from app.routes.conversations import router as conversations_router
@@ -155,6 +156,7 @@ app.include_router(fleet_router)
 app.include_router(compliance_router)
 app.include_router(vendors_router)
 app.include_router(anomalies_router)
+app.include_router(admin_router)
 app.include_router(graph_router)
 app.include_router(conversations_router)
 app.include_router(documents_router)

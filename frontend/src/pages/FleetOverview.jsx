@@ -13,6 +13,8 @@ export default function FleetOverview() {
   const { data, loading, error, refetch } = useSubAgent(() => apiGet("/api/fleet/overview"), {
     topic: "fleet_stats",
   });
+  const { data: anomalyData } = useSubAgent(() => apiGet("/api/anomalies?limit=3"), { topic: "anomalies" });
+  const anomalyPreview = anomalyData?.anomalies || [];
   const graph = useSubAgent(() => apiGet("/api/fleet/graph"), { topic: "fleet_stats" });
 
   if (loading) return <div className="p-6 space-y-4"><Skeleton className="h-24" /><Skeleton className="h-48" /></div>;
@@ -109,8 +111,22 @@ export default function FleetOverview() {
           </div>
 
           <section className="rounded-lg border border-slate-800 p-4">
-            <h2 className="text-sm font-semibold mb-2">Anomalies</h2>
-            <p className="text-sm text-slate-500">No anomalies detected. <Link to="/anomalies" className="text-blue-400">See all</Link></p>
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-sm font-semibold">Anomalies</h2>
+              <Link to="/anomalies" className="text-xs text-blue-400">See all</Link>
+            </div>
+            {anomalyPreview.length === 0 ? (
+              <p className="text-sm text-slate-500">No anomalies detected.</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {anomalyPreview.map((a) => (
+                  <li key={a.anomaly_id} className="flex justify-between gap-2">
+                    <span className="truncate">{a.description}</span>
+                    <span className="text-slate-500 shrink-0">{a.severity}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">

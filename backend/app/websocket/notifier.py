@@ -47,17 +47,21 @@ async def run_notify_listener(stop_event: asyncio.Event) -> None:
         conn: asyncpg.Connection | None = None
         try:
             conn = await asyncpg.connect(settings.database_url.replace("+asyncpg", ""))
-            queue: asyncio.Queue[str] = asyncio.Queue()
+            queue: asyncio.Queue[tuple[str, str]] = asyncio.Queue()
 
-            def callback(_connection, _pid, _channel, payload):
-                queue.put_nowait(payload)
+            def doc_callback(_connection, _pid, _channel, payload):
+                queue.put_nowait(("document_events", payload))
 
-            await conn.add_listener("document_events", callback)
-            logger.info("NOTIFY listener started on channel document_events")
+            def intel_callback(_connection, _pid, _channel, payload):
+                queue.put_nowait(("intelligence_events", payload))
+
+            await conn.add_listener("document_events", doc_callback)
+            await conn.add_listener("intelligence_events", intel_callback)
+            logger.info("NOTIFY listeners started on document_events and intelligence_events")
 
             while not stop_event.is_set():
                 try:
-                    payload_raw = await asyncio.wait_for(queue.get(), timeout=1.0)
+                    channel, payload_raw = await asyncio.wait_for(queue.get(), timeout=1.0)
                 except asyncio.TimeoutError:
                     continue
                 try:
@@ -65,7 +69,10 @@ async def run_notify_listener(stop_event: asyncio.Event) -> None:
                 except json.JSONDecodeError:
                     logger.warning("Invalid NOTIFY JSON: %s", payload_raw)
                     continue
-                await _route_notification(payload)
+                if channel == "intelligence_events" and payload.get("type") == "anomalies_updated":
+                    await push_deltas_for_event({"status": "complete", "type": "anomalies_updated"})
+                else:
+                    await _route_notification(payload)
         except asyncio.CancelledError:
             break
         except Exception:

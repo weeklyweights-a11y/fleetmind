@@ -61,7 +61,15 @@ async def get_fleet_overview(
     ages = [today.year - t.year for t in trucks if t.status == "active" and t.year]
     avg_age = sum(ages) / len(ages) if ages else 0.0
 
-    fully, warnings, expirations, incomplete, urgent = await compliance_snapshot_counts(db, tenant_id)
+    fully, warnings, expirations, incomplete, urgent_legacy = await compliance_snapshot_counts(db, tenant_id)
+
+    from app.intelligence.jobs.compliance_scanner import read_compliance_cache
+
+    cache = await read_compliance_cache(tenant_id=tenant_id)
+    if cache and cache.get("urgent_items"):
+        urgent = cache["urgent_items"]
+    else:
+        urgent = urgent_legacy
 
     this_month = (
         await db.execute(
