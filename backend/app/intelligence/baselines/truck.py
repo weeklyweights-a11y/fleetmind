@@ -6,10 +6,10 @@ import uuid
 from datetime import date, timedelta
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.intelligence.baselines.stats import mean, monthly_buckets, monthly_spend_stats
+from app.intelligence.baselines.stats import monthly_buckets, monthly_spend_stats
 from app.intelligence.metrics_store import upsert_fleet_metric
 from app.models.maintenance_event import MaintenanceEvent
 from app.models.mileage_record import MileageRecord

@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
-from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.exceptions import TruckNotFoundError
 from app.models.mileage_record import MileageRecord

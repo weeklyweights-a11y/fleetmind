@@ -1,13 +1,12 @@
 """NOTIFY event tests."""
 
-import json
 import uuid
 
 import pytest
 from sqlalchemy import text
 
 from app.database import async_session_factory
-from app.websocket.events import NOTIFY_CHANNEL, notify_document_event
+from app.websocket.events import notify_document_event
 
 
 @pytest.mark.asyncio

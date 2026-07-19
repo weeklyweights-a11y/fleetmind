@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import uuid
-from decimal import Decimal
 
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.assignment import Assignment

@@ -6,7 +6,7 @@ import re
 
 from app.enums import DocumentType
 from app.extraction import schemas
-from app.extraction.text_utils import collapse_spaced_text, extract_vin, fields_from_labels, parse_int_from_text
+from app.extraction.text_utils import collapse_spaced_text, fields_from_labels, parse_int_from_text
 from app.extraction.types import ExtractionResult, LayoutResult
 
 

@@ -4,7 +4,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from app.schemas.common import GraphEdge, GraphNode
 
 
 class VendorFleetItem(BaseModel):

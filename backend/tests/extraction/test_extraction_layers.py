@@ -9,7 +9,7 @@ from app.extraction.layer1_reader import read_document
 from app.extraction.layer2_layout import build_layout
 from app.extraction.classifier import classify_document, classify_for_bulk_import
 from app.extraction.layer4_normalizer import normalize_fields
-from app.extraction.layer5_validator import vin_check_digit_valid, validate_fields
+from app.extraction.layer5_validator import vin_check_digit_valid
 from app.extraction.text_utils import meaningful_char_count, collapse_spaced_text
 
 # The Sunflower dataset is gitignored (data/) and only present on machines that

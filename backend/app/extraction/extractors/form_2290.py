@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 
 from app.enums import DocumentType
 from app.extraction.text_utils import extract_vin, fields_from_labels

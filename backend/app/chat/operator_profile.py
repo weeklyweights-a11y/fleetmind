@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.chat.prompts import load_prompt
 from app.chat.session import load_operator_profile
 from app.models.conversation import Conversation, ConversationMessage
-from app.services.gemini_client import generate_json, generate_text
+from app.services.gemini_client import generate_json
 
 
 def _merge_ranked_counts(

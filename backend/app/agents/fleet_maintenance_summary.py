@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.maintenance_event import MaintenanceEvent

@@ -9,7 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents._compliance import compliance_snapshot_counts
-from app.intelligence.baselines.stats import mean, mom_change_pct, monthly_buckets, qoq_change_pct
+from app.intelligence.baselines.stats import mom_change_pct, monthly_buckets, qoq_change_pct
 from app.intelligence.metrics_store import upsert_fleet_metric
 from app.models.document import Document
 from app.models.maintenance_event import MaintenanceEvent

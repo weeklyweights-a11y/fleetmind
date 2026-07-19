@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.schemas.common import ComplianceStatusColor, GraphEdge, GraphNode
+from app.schemas.common import GraphEdge, GraphNode
 
 
 class FleetComposition(BaseModel):

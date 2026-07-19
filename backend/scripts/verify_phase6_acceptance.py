@@ -7,7 +7,6 @@ import argparse
 import asyncio
 import json
 import os
-import sys
 import uuid
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
@@ -31,14 +30,13 @@ async def run_checks(mock: bool = False) -> int:
     from app.database import async_session_factory
     from app.intelligence.baselines.compute import recompute_all, recompute_truck
     from app.intelligence.jobs.compliance_scanner import run_compliance_scan_job
-    from app.intelligence.anomalies.detectors.runner import run_detectors_for_truck, run_fleet_detectors
+    from app.intelligence.anomalies.detectors.runner import run_fleet_detectors
     from app.intelligence.anomalies.detectors.cost_spike import detect_cost_spike
     from app.intelligence.anomalies.detectors.recurring_issue import detect_recurring_issue
     from app.intelligence.anomalies.service import update_anomaly_status, upsert_anomaly
     from app.intelligence.hooks.document_complete import on_document_complete
     from app.intelligence.learning.reports import run_weekly_learning_report
     from app.intelligence.metrics_store import get_fleet_metric
-    from app.intelligence.schemas import AnomalyCandidate
     from app.models.anomaly import Anomaly
     from app.models.background_job_run import BackgroundJobRun
     from app.models.conversation import Conversation

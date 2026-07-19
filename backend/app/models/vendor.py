@@ -1,4 +1,3 @@
-import uuid
 
 from sqlalchemy import Index, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column

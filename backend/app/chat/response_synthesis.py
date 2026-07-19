@@ -8,7 +8,7 @@ from app.chat.dispatch import build_tools_used, results_for_synthesis
 from app.chat.prompts import load_prompt
 from app.chat.schemas import ChatGraphState, ToolsUsedEntry
 from app.chat.streaming import WsStreamCallback
-from app.services.gemini_client import generate_text, stream_text
+from app.services.gemini_client import stream_text
 
 
 def build_synthesis_prompt(state: ChatGraphState) -> str:

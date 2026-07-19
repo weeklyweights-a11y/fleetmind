@@ -1,8 +1,6 @@
 """Tests for fleet metrics store."""
 
 import uuid
-from datetime import date
-from decimal import Decimal
 
 import pytest
 

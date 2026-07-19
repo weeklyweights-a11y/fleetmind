@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import uuid
 
-from sqlalchemy import select
 
 from app.chat.operator_profile import maybe_infer_response_style, update_profile_after_conversation
 from app.chat.orchestrator import mark_summary_scheduled

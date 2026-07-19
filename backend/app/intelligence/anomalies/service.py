@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.intelligence.config import ACTIVE_ANOMALY_STATUSES, TERMINAL_ANOMALY_STATUSES, THRESHOLDS

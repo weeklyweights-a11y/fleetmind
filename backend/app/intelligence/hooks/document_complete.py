@@ -14,7 +14,6 @@ from app.intelligence.anomalies.notify import emit_anomalies_updated
 from app.intelligence.baselines.compute import recompute_fleet, recompute_truck, recompute_vendor
 from app.intelligence.jobs.compliance_scanner import (
     auto_resolve_compliance_for_truck,
-    run_compliance_scan_job,
     scan_compliance_deadlines,
     write_compliance_cache,
 )

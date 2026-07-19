@@ -7,7 +7,6 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.intelligence.anomalies.service import update_anomaly_status as _update_status
-from app.models.anomaly import Anomaly
 from app.schemas.anomalies import AnomalyItem
 
 

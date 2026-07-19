@@ -4,7 +4,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.schemas.common import GraphEdge, GraphNode
 
 
 class DriverListItem(BaseModel):

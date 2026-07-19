@@ -4,9 +4,7 @@
 from __future__ import annotations
 
 import asyncio
-import json
 from pathlib import Path
-from uuid import UUID
 
 from sqlalchemy import delete, select
 

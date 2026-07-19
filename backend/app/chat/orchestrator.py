@@ -10,7 +10,7 @@ from langgraph.graph import END, StateGraph
 
 from app.chat.abbreviate_results import abbreviate_sub_agent_result
 from app.chat.clarify import clarify_and_stream
-from app.chat.dispatch import build_tools_used, execute_dispatch_plan
+from app.chat.dispatch import execute_dispatch_plan
 from app.chat.query_understanding import understand_query
 from app.chat.response_synthesis import synthesize_and_stream
 from app.chat.schemas import (

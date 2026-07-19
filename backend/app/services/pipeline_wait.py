@@ -10,7 +10,6 @@ from sqlalchemy import func, select
 
 from app.config import settings
 from app.database import async_session_factory
-from app.enums import ProcessingStatus
 from app.models.document import Document
 from app.services.document_retry import (
     IN_FLIGHT_STATUSES,

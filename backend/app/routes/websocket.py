@@ -12,7 +12,6 @@ from app.chat.session import (
     create_conversation,
     end_conversation,
     init_chat_session,
-    load_turn_state,
     resume_conversation,
     touch_session_activity,
 )

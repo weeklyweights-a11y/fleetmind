@@ -7,7 +7,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.intelligence.baselines.driver import compute_all_driver_baselines, compute_driver_baselines
+from app.intelligence.baselines.driver import compute_all_driver_baselines
 from app.intelligence.baselines.fleet import compute_fleet_baselines
 from app.intelligence.baselines.truck import compute_truck_baselines
 from app.intelligence.baselines.vendor import compute_all_vendor_baselines, compute_vendor_baselines
